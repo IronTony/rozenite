@@ -88,8 +88,8 @@ declare module '/rozenite/models/react_native/react_native.js' {
       getError(): string | undefined;
     };
 
-    export type EvaluateResponse = {
-      result: {
+    export type EvaluateResponse = ProtocolResponseWithError & {
+      result?: {
         type:
           | 'object'
           | 'function'
@@ -206,7 +206,7 @@ declare module '/rozenite/models/react_native/react_native.js' {
         invoke_evaluate: (params: {
           expression: string;
           returnByValue?: boolean;
-        }) => Promise<RuntimeModel.EvaluateResponse>;
+        }) => Promise<EvaluateResponse>;
         invoke_addBinding: (params: {
           name: string;
         }) => Promise<RuntimeModel.ProtocolResponseWithError>;

@@ -190,6 +190,14 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
         })
       )
       .then((response) => {
+        const protocolError = response.getError();
+        if (protocolError) {
+          throw new Error(
+            'Failed to get binding name for RozeniteBindingsModel: protocol error: ' +
+              protocolError
+          );
+        }
+
         if (response.exceptionDetails) {
           throw new Error(
             'Failed to get binding name for RozeniteBindingsModel on a global: ' +
@@ -198,12 +206,13 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
         }
 
         if (
+          !response.result ||
           response.result.value === null ||
           response.result.value === undefined
         ) {
           throw new Error(
             'Failed to get binding name for RozeniteBindingsModel on a global: returned value is ' +
-              String(response.result.value)
+              String(response.result?.value)
           );
         }
 
@@ -317,6 +326,18 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
         returnByValue: true,
       })
       .then((response) => {
+        const protocolError = response.getError();
+        if (protocolError) {
+          if (protocolError.includes('stub connection')) {
+            throw new Error('Target uses stub connection, skipping');
+          }
+          return new Promise<void>((resolve) =>
+            setTimeout(resolve, 500)
+          ).then(() =>
+            this.waitForFuseboxDispatcherToBeInitialized(attempt + 1)
+          );
+        }
+
         if (response.exceptionDetails) {
           throw new Error(
             'Failed to wait for React DevTools dispatcher initialization: ' +
@@ -324,9 +345,10 @@ export class RozeniteBindingsModel extends SDK.SDKModel.SDKModel {
           );
         }
 
-        if (response.result.value === false) {
-          // Wait for 250 ms and restart
-          return new Promise((resolve) => setTimeout(resolve, 250)).then(() =>
+        if (!response.result || response.result.value === false) {
+          return new Promise<void>((resolve) =>
+            setTimeout(resolve, 250)
+          ).then(() =>
             this.waitForFuseboxDispatcherToBeInitialized(attempt + 1)
           );
         }

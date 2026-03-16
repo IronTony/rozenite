@@ -9,6 +9,7 @@ export class PluginView
 {
   #model: RozenitePluginModel | null = null;
   #src: string;
+  #initialized = false;
 
   constructor(pluginId: string, panelId: string, name: string, url: string) {
     super(name + ' 💎', true, panelId);
@@ -72,13 +73,16 @@ export class PluginView
   }
 
   #handleInitializationCompleted(): void {
+    this.#initialized = true;
     this.#renderDevToolsView();
   }
 
   #handleInitializationFailed({
     data: errorMessage,
   }: RuntimeEvent<string>): void {
-    this.#renderErrorView(errorMessage);
+    if (!this.#initialized) {
+      this.#renderErrorView(errorMessage);
+    }
   }
 
   #handleBackendDestroyed(): void {

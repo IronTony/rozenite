@@ -11,18 +11,26 @@ export type BundlerType = 'metro' | 'repack';
 const isExpoProject = (projectRoot: string): boolean => {
   const appJsonPath = path.join(projectRoot, 'app.json');
 
-  if (!fs.existsSync(appJsonPath)) {
-    return false;
+  if (fs.existsSync(appJsonPath)) {
+    try {
+      const appJsonContent = fs.readFileSync(appJsonPath, 'utf8');
+      const appJson = JSON.parse(appJsonContent);
+      if (typeof appJson === 'object' && appJson !== null && 'expo' in appJson) {
+        return true;
+      }
+    } catch {
+      // If we can't parse the JSON, continue to other checks
+    }
   }
 
-  try {
-    const appJsonContent = fs.readFileSync(appJsonPath, 'utf8');
-    const appJson = JSON.parse(appJsonContent);
-    return typeof appJson === 'object' && appJson !== null && 'expo' in appJson;
-  } catch {
-    // If we can't parse the JSON, it's not a valid Expo project
-    return false;
+  const configExtensions = ['.ts', '.js', '.mjs'];
+  for (const ext of configExtensions) {
+    if (fs.existsSync(path.join(projectRoot, `app.config${ext}`))) {
+      return true;
+    }
   }
+
+  return false;
 };
 
 const isSourceFilePresent = (
